@@ -22,67 +22,52 @@ import { StarRatingComponent } from '../shared/star-rating.component';
   standalone: true,
   imports: [CommonModule, FormsModule, StarRatingComponent],
   template: `
-    <div class="chat-app">
-      <!-- Pre-Chat: Welcome Screen -->
-      <div class="welcome-screen" *ngIf="!chatSession">
-        <div class="welcome-container">
-          <div class="welcome-header">
-            <div class="logo-circle">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    <div class="chat-app-container">
+      <div class="bg-orb orb-1"></div>
+      <div class="bg-orb orb-2"></div>
+      <div class="bg-grid"></div>
+
+      <div class="view-welcome" *ngIf="!chatSession">
+        <div class="glass-card welcome-card">
+          <div class="brand-header">
+            <div class="logo-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
               </svg>
             </div>
-            <h1>Welcome to Support</h1>
-            <p>We're here to help you. Start a conversation with our team.</p>
+            <h1>Support Portal</h1>
+            <p>Connect with our team in seconds.</p>
           </div>
 
-          <form class="welcome-form" (ngSubmit)="startChat()">
-            <div class="input-group">
-              <label>Your Name</label>
-              <input
-                type="text"
-                [(ngModel)]="customerName"
-                name="customerName"
-                required
-                placeholder="John Doe"
-              />
+          <form (ngSubmit)="startChat()" class="welcome-form">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" [(ngModel)]="customerName" name="customerName" placeholder="e.g. Alex Smith" required>
             </div>
 
-            <div class="input-group">
+            <div class="form-group">
               <label>Email Address</label>
-              <input
-                type="email"
-                [(ngModel)]="customerEmail"
-                name="customerEmail"
-                required
-                placeholder="john@example.com"
-              />
+              <input type="email" [(ngModel)]="customerEmail" name="customerEmail" placeholder="name@company.com" required>
             </div>
 
-            <div class="input-group" *ngIf="departments.length > 0">
-              <label>How can we help?</label>
-              <div class="department-grid">
-                <button
-                  type="button"
+            <div class="form-group" *ngIf="departments.length > 0">
+              <label>Department</label>
+              <div class="dept-selector">
+                <div
                   *ngFor="let dept of departments"
-                  class="dept-btn"
-                  [class.active]="selectedDepartmentId === dept.id"
+                  class="dept-chip"
+                  [class.selected]="selectedDepartmentId === dept.id"
                   (click)="selectDepartment(dept.id)"
                 >
                   <span class="dept-icon">{{ getDeptIcon(dept.name) }}</span>
-                  <span class="dept-name">{{ dept.name }}</span>
-                </button>
+                  {{ dept.name }}
+                </div>
               </div>
-              <span class="hint">Select a topic or skip to chat with general support</span>
             </div>
 
-            <button
-              type="submit"
-              class="start-btn"
-              [disabled]="!customerName || !customerEmail"
-            >
-              <span>Start Conversation</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button type="submit" class="btn-primary" [disabled]="!customerName || !customerEmail">
+              Start Conversation
+              <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
@@ -91,119 +76,130 @@ import { StarRatingComponent } from '../shared/star-rating.component';
         </div>
       </div>
 
-      <!-- Active Chat Screen -->
-      <div class="chat-screen" *ngIf="chatSession">
-        <!-- Chat Header -->
-        <header class="chat-header">
-          <div class="header-left">
-            <div class="status-dot" [class.active]="chatSession.status === 'active'"></div>
-            <div class="header-info">
-              <h2>{{ chatSession.department?.name || 'Support Chat' }}</h2>
-              <span class="status-text">
-                <ng-container *ngIf="chatSession.status === 'waiting'">Connecting you with an agent...</ng-container>
-                <ng-container *ngIf="chatSession.status === 'active'">Chatting with {{ chatSession.assigned_agent?.full_name || 'Agent' }}</ng-container>
-                <ng-container *ngIf="chatSession.status === 'closed'">Conversation ended</ng-container>
-              </span>
-            </div>
-          </div>
-          <button
-            class="end-btn"
-            *ngIf="chatSession.status !== 'closed'"
-            (click)="endChat()"
-          >
-            End Chat
-          </button>
-        </header>
-
-        <!-- Waiting Indicator with Queue Status -->
-        <div class="waiting-banner" *ngIf="chatSession.status === 'waiting'">
-          <div class="queue-status-container">
-            <div class="pulse-ring"></div>
-            <div class="queue-info">
-              <span class="queue-title" *ngIf="!queueStatus || queueStatus.position === 0">
-                Looking for an available agent...
-              </span>
-              <ng-container *ngIf="queueStatus && queueStatus.position > 0">
-                <span class="queue-title">All agents are currently busy</span>
-                <span class="queue-position">You are #{{ queueStatus.position }} in queue</span>
-                <span class="queue-wait">Estimated wait: {{ queueStatus.estimated_wait_minutes }} minutes</span>
-              </ng-container>
-            </div>
+      <div class="view-waiting" *ngIf="chatSession && chatSession.status === 'waiting'">
+        <div class="radar-container">
+          <div class="radar-circle ring-1"></div>
+          <div class="radar-circle ring-2"></div>
+          <div class="radar-circle ring-3"></div>
+          <div class="radar-scan"></div>
+          <div class="radar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
           </div>
         </div>
 
-        <!-- Messages Area -->
-        <main class="messages-area" #messagesContainer>
-          <div class="messages-wrapper">
+        <div class="waiting-content">
+          <h2>Finding an Agent</h2>
+          <p class="status-text">
+            <ng-container *ngIf="!queueStatus || queueStatus.position === 0">
+              Connecting you to the best available support...
+            </ng-container>
+            <ng-container *ngIf="queueStatus && queueStatus.position > 0">
+              All agents are busy. You are <span class="highlight">#{{ queueStatus.position }}</span> in line.
+            </ng-container>
+          </p>
+          
+          <div class="wait-time-pill" *ngIf="queueStatus?.estimated_wait_minutes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Est. wait: {{ queueStatus!.estimated_wait_minutes }} min</span>
+          </div>
+
+          <button class="btn-text" (click)="endChat()">Cancel Request</button>
+        </div>
+      </div>
+
+      <div class="view-chat" *ngIf="chatSession && chatSession.status !== 'waiting'">
+        <header class="chat-header glass-panel">
+          <div class="agent-info">
+            <div class="agent-avatar">
+              {{ (chatSession.assigned_agent?.full_name || 'A')[0].toUpperCase() }}
+              <div class="status-badge" [class.online]="chatSession.status === 'active'"></div>
+            </div>
+            <div class="text-info">
+              <h3>{{ chatSession.assigned_agent?.full_name || 'Support Agent' }}</h3>
+              <span class="sub-text">{{ chatSession.department?.name || 'Customer Support' }}</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="btn-icon" (click)="endChat()" title="End Chat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="chat-viewport" #messagesContainer>
+          <div class="messages-list">
+            <div class="system-divider">
+              <span>Chat Started {{ formatTime(chatSession.created_at) }}</span>
+            </div>
+
             <div
               *ngFor="let msg of messages"
-              class="message-row"
-              [class.outgoing]="msg.sender_name === customerName"
+              class="message-wrapper"
+              [class.mine]="msg.sender_name === customerName"
+              [class.theirs]="msg.sender_name !== customerName && !msg.is_system_message"
               [class.system]="msg.is_system_message"
             >
               <div class="message-bubble">
-                <span class="sender" *ngIf="msg.sender_name !== customerName && !msg.is_system_message">
+                <div class="sender-name" *ngIf="msg.sender_name !== customerName && !msg.is_system_message">
                   {{ msg.sender_name }}
-                </span>
-                <p class="content">{{ msg.content }}</p>
-                <span class="time">{{ formatTime(msg.created_at) }}</span>
+                </div>
+                <div class="content">{{ msg.content }}</div>
+                <div class="timestamp">{{ formatTime(msg.created_at) }}</div>
               </div>
             </div>
 
-            <div class="typing-row" *ngIf="otherTyping">
-              <div class="typing-bubble">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+            <div class="message-wrapper theirs typing-wrapper" *ngIf="otherTyping">
+              <div class="message-bubble typing-bubble">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
               </div>
             </div>
           </div>
         </main>
 
-        <!-- Input Area -->
-        <footer class="input-area" *ngIf="chatSession.status !== 'closed'">
-          <input
-            type="text"
-            [(ngModel)]="messageText"
-            (keyup.enter)="sendMessage()"
-            (keyup)="onTyping()"
-            placeholder="Type a message..."
-            class="message-input"
-          />
-          <button
-            class="send-btn"
-            (click)="sendMessage()"
-            [disabled]="!messageText.trim()"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
+        <footer class="chat-input-area glass-panel" *ngIf="chatSession.status !== 'closed'">
+          <div class="input-capsule">
+            <input
+              type="text"
+              [(ngModel)]="messageText"
+              (keyup.enter)="sendMessage()"
+              (keyup)="onTyping()"
+              placeholder="Type your message..."
+            />
+            <button class="btn-send" (click)="sendMessage()" [disabled]="!messageText.trim()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
         </footer>
 
-        <!-- Closed Chat Banner -->
-        <div class="closed-banner" *ngIf="chatSession.status === 'closed' && !showReviewModal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-          <span>Thank you for chatting with us!</span>
+        <div class="chat-closed-overlay" *ngIf="chatSession.status === 'closed' && !showReviewModal">
+          <div class="closed-content">
+            <div class="icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h3>Conversation Ended</h3>
+            <p>Thank you for contacting support.</p>
+            <button class="btn-primary small" (click)="chatSession = undefined; messages = []">Start New Chat</button>
+          </div>
         </div>
       </div>
 
-      <!-- Review Modal -->
-      <div class="modal-overlay" *ngIf="showReviewModal" (click)="skipReview()">
-        <div class="review-modal" (click)="$event.stopPropagation()">
-          <div class="modal-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-            </svg>
+      <div class="modal-backdrop" *ngIf="showReviewModal">
+        <div class="glass-card review-card">
+          <div class="review-header">
+            <h3>Rate your experience</h3>
+            <p>How did {{ chatSession?.assigned_agent?.full_name || 'we' }} do today?</p>
           </div>
-          <h3>How was your experience?</h3>
-          <p>Your feedback helps us improve</p>
-
-          <div class="rating-container">
+          
+          <div class="star-wrapper">
             <app-star-rating
               [rating]="reviewRating"
               (ratingChange)="reviewRating = $event"
@@ -211,710 +207,348 @@ import { StarRatingComponent } from '../shared/star-rating.component';
             ></app-star-rating>
           </div>
 
-          <textarea
-            [(ngModel)]="reviewComment"
-            placeholder="Tell us more (optional)..."
+          <textarea 
+            [(ngModel)]="reviewComment" 
+            placeholder="Any additional feedback? (Optional)"
             rows="3"
           ></textarea>
 
-          <div class="modal-actions">
-            <button class="skip-btn" (click)="skipReview()">Skip</button>
-            <button
-              class="submit-btn"
-              (click)="submitReview()"
-              [disabled]="reviewRating === 0 || isSubmittingReview"
-            >
-              {{ isSubmittingReview ? 'Sending...' : 'Submit' }}
+          <div class="review-actions">
+            <button class="btn-text" (click)="skipReview()">Skip</button>
+            <button class="btn-primary" (click)="submitReview()" [disabled]="reviewRating === 0 || isSubmittingReview">
+              {{ isSubmittingReview ? 'Sending...' : 'Submit Review' }}
             </button>
           </div>
         </div>
       </div>
-
-      <!-- Success Toast -->
-      <div class="toast" *ngIf="reviewSubmitted && chatSession?.status === 'closed'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        Thanks for your feedback!
+      
+      <div class="toast-notification" [class.show]="reviewSubmitted">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Feedback submitted successfully!
       </div>
     </div>
   `,
   styles: [`
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    /* --- CORE VARIABLES & RESET --- */
+    :host {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-dark: #0f172a;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --mine-bg: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --theirs-bg: rgba(255, 255, 255, 0.08);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    .chat-app {
-      height: 100vh;
-      background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    /* Welcome Screen */
-    .welcome-screen {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .welcome-container {
+    .chat-app-container {
+      position: relative;
       width: 100%;
-      max-width: 440px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 24px;
-      padding: 48px 40px;
-      backdrop-filter: blur(20px);
-    }
-
-    .welcome-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .logo-circle {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
-    }
-
-    .logo-circle svg {
-      width: 32px;
-      height: 32px;
-      color: white;
-    }
-
-    .welcome-header h1 {
-      color: #fff;
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-    }
-
-    .welcome-header p {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .welcome-form {
+      height: 100vh;
+      background: var(--bg-dark);
+      overflow: hidden;
+      color: var(--text-main);
       display: flex;
       flex-direction: column;
-      gap: 24px;
     }
 
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .input-group label {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .input-group input {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 15px;
-      color: #fff;
-      transition: all 0.2s;
-    }
-
-    .input-group input::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
-
-    .input-group input:focus {
-      outline: none;
-      border-color: #6366f1;
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    .department-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .dept-btn {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .dept-btn:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-
-    .dept-btn.active {
-      background: rgba(99, 102, 241, 0.15);
-      border-color: #6366f1;
-    }
-
-    .dept-icon {
-      font-size: 24px;
-    }
-
-    .dept-name {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .hint {
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .start-btn {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      border: none;
-      border-radius: 12px;
-      padding: 16px 24px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.3s;
-      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
-    }
-
-    .start-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
-    }
-
-    .start-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .start-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Chat Screen */
-    .chat-screen {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.02);
-      border-left: 1px solid rgba(255, 255, 255, 0.05);
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .chat-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #fbbf24;
-    }
-
-    .status-dot.active {
-      background: #22c55e;
-      box-shadow: 0 0 12px rgba(34, 197, 94, 0.5);
-    }
-
-    .header-info h2 {
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .status-text {
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 13px;
-    }
-
-    .end-btn {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .end-btn:hover {
-      background: rgba(239, 68, 68, 0.2);
-    }
-
-    .waiting-banner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(251, 191, 36, 0.1);
-      border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-      color: #fbbf24;
-    }
-
-    .queue-status-container {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .queue-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .queue-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .queue-position {
-      font-size: 14px;
-      color: rgba(251, 191, 36, 0.9);
-    }
-
-    .queue-wait {
-      font-size: 13px;
-      color: rgba(251, 191, 36, 0.7);
-    }
-
-    .pulse-ring {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fbbf24;
-      animation: pulse 2s infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
-      }
-      70% {
-        box-shadow: 0 0 0 12px rgba(251, 191, 36, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
-      }
-    }
-
-    /* Messages Area */
-    .messages-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-    }
-
-    .messages-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .message-row {
-      display: flex;
-      align-items: flex-end;
-    }
-
-    .message-row.outgoing {
-      justify-content: flex-end;
-    }
-
-    .message-row.system {
-      justify-content: center;
-    }
-
-    .message-bubble {
-      max-width: 70%;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 18px 18px 18px 4px;
-      padding: 12px 16px;
-    }
-
-    .message-row.outgoing .message-bubble {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      border-radius: 18px 18px 4px 18px;
-    }
-
-    .message-row.system .message-bubble {
-      background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.2);
-      border-radius: 12px;
-      max-width: 90%;
-      text-align: center;
-    }
-
-    .sender {
-      display: block;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 11px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .content {
-      color: #fff;
-      font-size: 14px;
-      line-height: 1.5;
-      margin: 0;
-      word-wrap: break-word;
-    }
-
-    .time {
-      display: block;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 10px;
-      margin-top: 6px;
-    }
-
-    .message-row.outgoing .time {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .typing-row {
-      display: flex;
-    }
-
-    .typing-bubble {
-      display: flex;
-      gap: 4px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 18px;
-      padding: 16px 20px;
-    }
-
-    .typing-bubble .dot {
-      width: 8px;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 50%;
-      animation: typing 1.4s ease-in-out infinite;
-    }
-
-    .typing-bubble .dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-bubble .dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes typing {
-      0%, 60%, 100% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
-      30% {
-        transform: translateY(-6px);
-        opacity: 1;
-      }
-    }
-
-    /* Input Area */
-    .input-area {
-      display: flex;
-      gap: 12px;
-      padding: 16px 24px;
-      background: rgba(255, 255, 255, 0.03);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .message-input {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 14px 20px;
-      font-size: 14px;
-      color: #fff;
-      transition: all 0.2s;
-    }
-
-    .message-input::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
-
-    .message-input:focus {
-      outline: none;
-      border-color: #6366f1;
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    .send-btn {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      border: none;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .send-btn:hover:not(:disabled) {
-      transform: scale(1.05);
-    }
-
-    .send-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .send-btn svg {
-      width: 20px;
-      height: 20px;
-      color: #fff;
-    }
-
-    .closed-banner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 20px;
-      background: rgba(34, 197, 94, 0.1);
-      border-top: 1px solid rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .closed-banner svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
+    /* --- BACKGROUND EFFECTS --- */
+    .bg-grid {
+      position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background-image: linear-gradient(var(--glass-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+      background-size: 50px 50px;
+      opacity: 0.1;
+      pointer-events: none;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.4;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .orb-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; }
+    .orb-2 { width: 300px; height: 300px; background: #ec4899; bottom: -50px; right: -50px; animation-delay: -10s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, 50px); }
+    }
+
+    /* --- GLASS COMPONENTS --- */
+    .glass-card, .glass-panel {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* --- WELCOME VIEW --- */
+    .view-welcome {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 100;
-      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
-    .review-modal {
-      background: linear-gradient(145deg, #1a1a3e 0%, #0f0f23 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .welcome-card {
+      width: 100%;
+      max-width: 420px;
       border-radius: 24px;
       padding: 40px;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .brand-header { text-align: center; margin-bottom: 32px; }
+    .logo-container {
+      width: 64px; height: 64px;
+      background: var(--mine-bg);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    }
+    .logo-container svg { width: 32px; height: 32px; color: white; }
+    .brand-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .brand-header p { color: var(--text-muted); font-size: 15px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; color: var(--text-muted); font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input {
       width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .modal-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-    }
-
-    .modal-icon svg {
-      width: 28px;
-      height: 28px;
-      color: #fff;
-    }
-
-    .review-modal h3 {
-      color: #fff;
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .review-modal p {
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
-
-    .rating-container {
-      margin-bottom: 24px;
-    }
-
-    .review-modal textarea {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
       border-radius: 12px;
       padding: 14px 16px;
-      font-size: 14px;
-      color: #fff;
-      resize: none;
-      font-family: inherit;
-      margin-bottom: 24px;
-    }
-
-    .review-modal textarea::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
-
-    .review-modal textarea:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .skip-btn {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 14px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
+      color: white;
+      font-size: 15px;
       transition: all 0.2s;
     }
+    .form-group input:focus { outline: none; border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
 
-    .skip-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .dept-selector { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dept-chip {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
     }
+    .dept-chip:hover { background: rgba(255,255,255,0.1); }
+    .dept-chip.selected { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
 
-    .submit-btn {
-      flex: 1;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    .btn-primary {
+      width: 100%;
+      background: var(--mine-bg);
+      color: white;
       border: none;
-      border-radius: 12px;
-      padding: 14px;
-      color: #fff;
-      font-size: 14px;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       transition: all 0.2s;
     }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary.small { width: auto; padding: 10px 24px; font-size: 14px; }
+    .arrow-icon { width: 18px; height: 18px; }
 
-    .submit-btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .submit-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-      color: #fff;
-      padding: 14px 24px;
-      border-radius: 12px;
+    /* --- WAITING VIEW --- */
+    .view-waiting {
+      flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
-      z-index: 200;
+      justify-content: center;
+      z-index: 10;
+    }
+    .radar-container { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 40px; }
+    .radar-circle { position: absolute; border-radius: 50%; border: 1px solid var(--primary); opacity: 0; animation: ripple 3s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+    .ring-1 { width: 100%; height: 100%; animation-delay: 0s; }
+    .ring-2 { width: 100%; height: 100%; animation-delay: 1s; }
+    .ring-3 { width: 100%; height: 100%; animation-delay: 2s; }
+    .radar-icon { z-index: 2; color: white; background: var(--primary); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--primary); }
+    .radar-icon svg { width: 28px; height: 28px; }
+    
+    @keyframes ripple {
+      0% { width: 20%; height: 20%; opacity: 0.8; border-width: 3px; }
+      100% { width: 100%; height: 100%; opacity: 0; border-width: 0px; }
+    }
+
+    .waiting-content { text-align: center; max-width: 400px; }
+    .waiting-content h2 { font-size: 24px; margin-bottom: 12px; }
+    .status-text { color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+    .highlight { color: var(--primary); font-weight: 700; font-size: 1.1em; }
+    
+    .wait-time-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+      padding: 8px 16px; border-radius: 20px; font-size: 13px; color: #fbbf24;
+      margin-bottom: 32px;
+    }
+    .wait-time-pill svg { width: 16px; height: 16px; }
+
+    .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; text-decoration: underline; }
+    .btn-text:hover { color: white; }
+
+    /* --- CHAT VIEW --- */
+    .view-chat { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 10; }
+    
+    .chat-header {
+      padding: 16px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .agent-info { display: flex; align-items: center; gap: 12px; }
+    .agent-avatar {
+      width: 42px; height: 42px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; position: relative; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .status-badge { width: 10px; height: 10px; background: #ef4444; border: 2px solid var(--bg-dark); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
+    .status-badge.online { background: #22c55e; }
+    .text-info h3 { font-size: 16px; font-weight: 600; margin: 0; }
+    .sub-text { font-size: 12px; color: var(--text-muted); }
+    
+    .btn-icon { background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-icon:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .btn-icon svg { width: 20px; height: 20px; }
+
+    .chat-viewport { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
+    .messages-list { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding-bottom: 10px; }
+    
+    .system-divider { text-align: center; margin: 20px 0; opacity: 0.5; font-size: 12px; position: relative; }
+    .system-divider::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: var(--glass-border); z-index: 0; }
+    .system-divider span { background: var(--bg-dark); padding: 0 10px; position: relative; z-index: 1; }
+
+    .message-wrapper { display: flex; margin-bottom: 16px; animation: slideIn 0.3s ease-out; }
+    .message-wrapper.mine { justify-content: flex-end; }
+    .message-wrapper.theirs { justify-content: flex-start; }
+    .message-wrapper.system { justify-content: center; }
+
+    .message-bubble {
+      max-width: 70%; padding: 12px 18px; border-radius: 20px; position: relative;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .mine .message-bubble {
+      background: var(--mine-bg);
+      color: white;
+      border-radius: 20px 20px 4px 20px;
+    }
+    .theirs .message-bubble {
+      background: var(--theirs-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      border-radius: 20px 20px 20px 4px;
+    }
+    .system .message-bubble {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 12px;
+    }
+    
+    .sender-name { font-size: 11px; margin-bottom: 4px; opacity: 0.7; font-weight: 600; }
+    .content { line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+    .timestamp { font-size: 10px; opacity: 0.5; margin-top: 4px; text-align: right; }
+    
+    /* Typing Animation */
+    .typing-wrapper { margin-bottom: 8px; }
+    .typing-bubble { padding: 12px 16px; display: flex; gap: 4px; align-items: center; min-width: 60px; }
+    .dot { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+    .chat-input-area { padding: 20px; }
+    .input-capsule {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+      border-radius: 30px; padding: 6px 6px 6px 20px;
+      display: flex; align-items: center; gap: 10px;
+      transition: all 0.2s;
+    }
+    .input-capsule:focus-within { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+    .input-capsule input { background: none; border: none; flex: 1; color: white; font-size: 15px; padding: 8px 0; }
+    .input-capsule input:focus { outline: none; }
+    
+    .btn-send {
+      width: 42px; height: 42px; border-radius: 50%; border: none;
+      background: var(--mine-bg); color: white;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-send:hover:not(:disabled) { transform: scale(1.1) rotate(-10deg); }
+    .btn-send:disabled { opacity: 0.5; background: #334155; cursor: not-allowed; }
+    .btn-send svg { width: 18px; height: 18px; margin-left: -2px; margin-top: 2px; }
+
+    /* --- CLOSED OVERLAY --- */
+    .chat-closed-overlay {
+      position: absolute; bottom: 80px; left: 0; right: 0;
+      display: flex; justify-content: center;
       animation: slideUp 0.3s ease-out;
     }
-
-    .toast svg {
-      width: 18px;
-      height: 18px;
+    .closed-content {
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      padding: 20px 30px; border-radius: 16px;
+      text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
+    .icon-box { width: 40px; height: 40px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+    .closed-content h3 { font-size: 16px; margin-bottom: 4px; }
+    .closed-content p { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
+    /* --- REVIEW MODAL --- */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+      z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
     }
+    .review-card {
+      width: 100%; max-width: 400px; padding: 30px; border-radius: 24px; text-align: center;
+    }
+    .review-header h3 { font-size: 22px; margin-bottom: 8px; }
+    .star-wrapper { margin: 24px 0; display: flex; justify-content: center; }
+    .review-card textarea {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+      border-radius: 12px; padding: 12px; color: white; margin-bottom: 24px; resize: none;
+    }
+    .review-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+    /* --- TOAST --- */
+    .toast-notification {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: #10b981; color: white; padding: 12px 24px; border-radius: 30px;
+      display: flex; align-items: center; gap: 8px; font-weight: 600;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 200;
+    }
+    .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast-notification svg { width: 18px; height: 18px; }
 
     /* Scrollbar */
-    .messages-area::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .messages-area::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .messages-area::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-
-    .messages-area::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
+    .chat-viewport::-webkit-scrollbar { width: 6px; }
+    .chat-viewport::-webkit-scrollbar-track { background: transparent; }
+    .chat-viewport::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    .chat-viewport::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
   `]
 })
 export class ChatInterfaceComponent implements OnInit, OnDestroy {
@@ -1000,9 +634,9 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy {
     if (lower.includes('sales')) return '💰';
     if (lower.includes('tech') || lower.includes('support')) return '🔧';
     if (lower.includes('billing') || lower.includes('payment')) return '💳';
-    if (lower.includes('customer')) return '👋';
-    if (lower.includes('general')) return '📋';
-    return '💬';
+    if (lower.includes('customer')) return '🤝';
+    if (lower.includes('general')) return 'ℹ️';
+    return '🏢';
   }
 
   loadDepartments(): void {
